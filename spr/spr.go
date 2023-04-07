@@ -10,6 +10,7 @@ import (
 	"os/exec"
 	"os/signal"
 	"regexp"
+	"sort"
 	"strconv"
 	"strings"
 	"sync"
@@ -21,6 +22,7 @@ import (
 	"github.com/ejoffe/spr/git"
 	"github.com/ejoffe/spr/github"
 	"github.com/ejoffe/spr/github/githubclient"
+	"github.com/ejoffe/spr/spr/prsorting"
 	"github.com/rs/zerolog/log"
 )
 
@@ -144,6 +146,11 @@ func (sd *stackediff) UpdatePullRequests(ctx context.Context, reviewers []string
 	if commitsReordered(localCommits, githubInfo.PullRequests) {
 		wg := new(sync.WaitGroup)
 		wg.Add(len(githubInfo.PullRequests))
+
+		// Reorder githubInfo.PullRequests based on the local commit order
+		// so that the PR descriptions are updated
+		localAndPr := prsorting.LocalCommitsAndPrs{LocalCommits: localCommits, PullRequests: githubInfo.PullRequests}
+		sort.Sort(prsorting.SortPrsByLocalCommits(localAndPr))
 
 		// if commits have been reordered :
 		//   first - rebase all pull requests to target branch
