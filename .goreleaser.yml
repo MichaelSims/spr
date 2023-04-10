@@ -54,31 +54,31 @@ changelog:
       - '^test:'
 brews:
   - 
-    name: spr
+    name: spr-sims
     tap:
-      owner: ejoffe
+      owner: MichaelSims
       name: homebrew-tap
-    homepage: https://github.com/ejoffe/spr
+    homepage: https://github.com/MichaelSims/spr
     description: Stacked Pull Requests on GitHub
     install: |
       bin.install "git-spr"
       bin.install "git-amend"
       bin.install "spr_reword_helper"
     license: "MIT"
-nfpms:
-  - file_name_template: '{{ .ProjectName }}_{{ .Arch }}{{ if .Arm }}v{{ .Arm }}{{ end }}'
-    id: packages
-    homepage: https://github.com/ejoffe/spr
-    description: Stacked Pull Requests on GitHub
-    maintainer: Eitan <eitan@inigolabs.com>
-    license: MIT
-    formats:
-    - deb
-    - rpm
-    dependencies:
-    - git
-    recommends:
-    - golang
+#nfpms:
+#  - file_name_template: '{{ .ProjectName }}_{{ .Arch }}{{ if .Arm }}v{{ .Arm }}{{ end }}'
+#    id: packages
+#    homepage: https://github.com/ejoffe/spr
+#    description: Stacked Pull Requests on GitHub
+#    maintainer: Eitan <eitan@inigolabs.com>
+#    license: MIT
+#    formats:
+#    - deb
+#    - rpm
+#    dependencies:
+#    - git
+#    recommends:
+#    - golang
 #snapcrafts:
 #  - name_template: '{{ .ProjectName }}_{{ .Arch }}{{ if .Arm }}v{{ .Arm }}{{ end }}'
 #    summary: Stacked Pull Requests on GitHub
@@ -86,9 +86,9 @@ nfpms:
 #      spr is a tool to easily run and automate stacked diff workflows on GitHub.
 #    confinement: classic
 #    publish: true
-publishers:
-  - name: fury.io
-    ids:
-      - packages
-    dir: "{{ dir .ArtifactPath }}"
-    cmd: curl -F package=@{{ .ArtifactName }} https://{{ .Env.FURY_TOKEN }}@push.fury.io/{{ .Env.FURY_ORG }}/
+#publishers:
+#  - name: fury.io
+#    ids:
+#      - packages
+#    dir: "{{ dir .ArtifactPath }}"
+#    cmd: curl -F package=@{{ .ArtifactName }} https://{{ .Env.FURY_TOKEN }}@push.fury.io/{{ .Env.FURY_ORG }}/
