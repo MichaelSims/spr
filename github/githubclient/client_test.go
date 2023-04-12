@@ -12,19 +12,14 @@ import (
 func TestPullRequestRegex(t *testing.T) {
 	tests := []struct {
 		input  string
-		branch string
 		commit string
 	}{
-		{input: "pr/branchname/deadbeef", branch: "branchname", commit: "deadbeef"},
-		{input: "pr/branch/name/deadbeef", branch: "branch/name", commit: "deadbeef"},
+		{input: "pr/deadbeef", commit: "deadbeef"},
 	}
 
 	for _, tc := range tests {
 		matches := BranchNameRegex.FindStringSubmatch(tc.input)
-		if tc.branch != matches[1] {
-			t.Fatalf("expected: '%v', actual: '%v'", tc.branch, matches[1])
-		}
-		if tc.commit != matches[2] {
+		if tc.commit != matches[1] {
 			t.Fatalf("expected: '%v', actual: '%v'", tc.commit, matches[2])
 		}
 	}

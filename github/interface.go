@@ -8,7 +8,7 @@ import (
 )
 
 type GitHubInterface interface {
-	GetInfo(ctx context.Context, gitcmd git.GitInterface) *GitHubInfo
+	GetInfo(ctx context.Context, gitcmd git.GitInterface, localCommits []git.Commit) *GitHubInfo
 	GetAssignableUsers(ctx context.Context) []RepoAssignee
 	CreatePullRequest(ctx context.Context, gitcmd git.GitInterface, info *GitHubInfo, commit git.Commit, prevCommit *git.Commit) *PullRequest
 	UpdatePullRequest(ctx context.Context, gitcmd git.GitInterface, info *GitHubInfo, pr *PullRequest, commit git.Commit, prevCommit *git.Commit)

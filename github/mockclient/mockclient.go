@@ -32,7 +32,7 @@ type MockClient struct {
 	expectMutex sync.Mutex
 }
 
-func (c *MockClient) GetInfo(ctx context.Context, gitcmd git.GitInterface) *github.GitHubInfo {
+func (c *MockClient) GetInfo(ctx context.Context, gitcmd git.GitInterface, localCommits []git.Commit) *github.GitHubInfo {
 	fmt.Printf("HUB: GetInfo\n")
 	c.verifyExpectation(expectation{
 		op: getInfoOP,

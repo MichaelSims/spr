@@ -174,9 +174,9 @@ type client struct {
 	api    genclient.Client
 }
 
-var BranchNameRegex = regexp.MustCompile(`pr/([a-zA-Z0-9_\-/\.]+)/([a-f0-9]{8})$`)
+var BranchNameRegex = regexp.MustCompile(`pr/([a-f0-9]{8})$`)
 
-func (c *client) GetInfo(ctx context.Context, gitcmd git.GitInterface) *github.GitHubInfo {
+func (c *client) GetInfo(ctx context.Context, gitcmd git.GitInterface, localCommits []git.Commit) *github.GitHubInfo {
 	if c.config.User.LogGitHubCalls {
 		fmt.Printf("> github fetch pull requests\n")
 	}
@@ -187,25 +187,36 @@ func (c *client) GetInfo(ctx context.Context, gitcmd git.GitInterface) *github.G
 
 	branchname := getLocalBranchName(gitcmd)
 
+	commitMap := make(map[string]git.Commit)
+	for _, commit := range localCommits {
+		commitMap[commit.CommitID] = commit
+	}
+
 	var requests []*github.PullRequest
 	for _, node := range *resp.Viewer.PullRequests.Nodes {
 		if resp.Repository.Id != node.Repository.Id {
 			continue
 		}
-		pullRequest := &github.PullRequest{
-			ID:         node.Id,
-			Number:     node.Number,
-			Title:      node.Title,
-			Body:       node.Body,
-			FromBranch: node.HeadRefName,
-			ToBranch:   node.BaseRefName,
-		}
 
 		matches := BranchNameRegex.FindStringSubmatch(node.HeadRefName)
-		if matches != nil && matches[1] == branchname {
+		if matches != nil {
+			prCommitID := matches[1]
+			if _, existsLocally := commitMap[prCommitID]; !existsLocally {
+				continue
+			}
+
+			pullRequest := &github.PullRequest{
+				ID:         node.Id,
+				Number:     node.Number,
+				Title:      node.Title,
+				Body:       node.Body,
+				FromBranch: node.HeadRefName,
+				ToBranch:   node.BaseRefName,
+			}
+
 			commit := (*node.Commits.Nodes)[0].Commit
 			pullRequest.Commit = git.Commit{
-				CommitID:   matches[2],
+				CommitID:   prCommitID,
 				CommitHash: commit.Oid,
 				Subject:    commit.MessageHeadline,
 				Body:       commit.MessageBody,
@@ -288,9 +299,9 @@ func (c *client) CreatePullRequest(ctx context.Context, gitcmd git.GitInterface,
 
 	baseRefName := GetRemoteBranchName(gitcmd, c.config.Repo)
 	if prevCommit != nil {
-		baseRefName = branchNameFromCommit(info, *prevCommit)
+		baseRefName = branchNameFromCommit(*prevCommit)
 	}
-	headRefName := branchNameFromCommit(info, commit)
+	headRefName := branchNameFromCommit(commit)
 
 	log.Debug().Interface("Commit", commit).
 		Str("FromBranch", headRefName).Str("ToBranch", baseRefName).
@@ -447,7 +458,7 @@ func (c *client) UpdatePullRequest(ctx context.Context, gitcmd git.GitInterface,
 
 	baseRefName := GetRemoteBranchName(gitcmd, c.config.Repo)
 	if prevCommit != nil {
-		baseRefName = branchNameFromCommit(info, *prevCommit)
+		baseRefName = branchNameFromCommit(*prevCommit)
 	}
 
 	log.Debug().Interface("Commit", commit).
@@ -604,8 +615,8 @@ func GetRemoteBranchName(gitcmd git.GitInterface, repoConfig *config.RepoConfig)
 	return repoConfig.GitHubBranch
 }
 
-func branchNameFromCommit(info *github.GitHubInfo, commit git.Commit) string {
-	return "pr/" + info.LocalBranch + "/" + commit.CommitID
+func branchNameFromCommit(commit git.Commit) string {
+	return "pr/" + commit.CommitID
 }
 
 // sortPullRequests sorts the pull requests so that the one that is on top of

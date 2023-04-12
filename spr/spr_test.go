@@ -69,6 +69,7 @@ func TestSPRBasicFlowFourCommits(t *testing.T) {
 
 	// 'git spr status' :: StatusPullRequest
 	githubmock.ExpectGetInfo()
+	gitmock.ExpectLogAndRespond([]*git.Commit{&c4, &c3, &c2, &c1})
 	s.StatusPullRequests(ctx)
 	assert.Equal("pull request stack is empty\n", output.String())
 	output.Reset()
@@ -83,6 +84,7 @@ func TestSPRBasicFlowFourCommits(t *testing.T) {
 	githubmock.ExpectAddReviewers([]string{mockclient.NobodyUserID})
 	githubmock.ExpectUpdatePullRequest(c1, nil)
 	githubmock.ExpectGetInfo()
+	gitmock.ExpectLogAndRespond([]*git.Commit{&c1})
 	s.UpdatePullRequests(ctx, []string{mockclient.NobodyLogin}, nil)
 	fmt.Printf("OUT: %s\n", output.String())
 	assert.Equal("[✔✔✔✔]   1 : test commit 1\n", output.String())
@@ -99,6 +101,7 @@ func TestSPRBasicFlowFourCommits(t *testing.T) {
 	githubmock.ExpectUpdatePullRequest(c1, nil)
 	githubmock.ExpectUpdatePullRequest(c2, &c1)
 	githubmock.ExpectGetInfo()
+	gitmock.ExpectLogAndRespond([]*git.Commit{&c2, &c1})
 	s.UpdatePullRequests(ctx, []string{mockclient.NobodyLogin}, nil)
 	lines := strings.Split(output.String(), "\n")
 	fmt.Printf("OUT: %s\n", output.String())
@@ -127,6 +130,7 @@ func TestSPRBasicFlowFourCommits(t *testing.T) {
 	githubmock.ExpectUpdatePullRequest(c3, &c2)
 	githubmock.ExpectUpdatePullRequest(c4, &c3)
 	githubmock.ExpectGetInfo()
+	gitmock.ExpectLogAndRespond([]*git.Commit{&c4, &c3, &c2, &c1})
 	s.UpdatePullRequests(ctx, []string{mockclient.NobodyLogin}, nil)
 	lines = strings.Split(output.String(), "\n")
 	fmt.Printf("OUT: %s\n", output.String())
@@ -208,6 +212,7 @@ func TestSPRMergeCount(t *testing.T) {
 	githubmock.ExpectUpdatePullRequest(c3, &c2)
 	githubmock.ExpectUpdatePullRequest(c4, &c3)
 	githubmock.ExpectGetInfo()
+	gitmock.ExpectLogAndRespond([]*git.Commit{&c4, &c3, &c2, &c1})
 	s.UpdatePullRequests(ctx, []string{mockclient.NobodyLogin}, nil)
 	lines := strings.Split(output.String(), "\n")
 	fmt.Printf("OUT: %s\n", output.String())
@@ -251,6 +256,7 @@ func TestSPRAmendCommit(t *testing.T) {
 
 	// 'git spr state' :: StatusPullRequest
 	githubmock.ExpectGetInfo()
+	gitmock.ExpectLogAndRespond([]*git.Commit{&c2, &c1})
 	s.StatusPullRequests(ctx)
 	assert.Equal("pull request stack is empty\n", output.String())
 	output.Reset()
@@ -265,6 +271,7 @@ func TestSPRAmendCommit(t *testing.T) {
 	githubmock.ExpectUpdatePullRequest(c1, nil)
 	githubmock.ExpectUpdatePullRequest(c2, &c1)
 	githubmock.ExpectGetInfo()
+	gitmock.ExpectLogAndRespond([]*git.Commit{&c2, &c1})
 	s.UpdatePullRequests(ctx, nil, nil)
 	fmt.Printf("OUT: %s\n", output.String())
 	lines := strings.Split(output.String(), "\n")
@@ -282,6 +289,7 @@ func TestSPRAmendCommit(t *testing.T) {
 	githubmock.ExpectUpdatePullRequest(c1, nil)
 	githubmock.ExpectUpdatePullRequest(c2, &c1)
 	githubmock.ExpectGetInfo()
+	gitmock.ExpectLogAndRespond([]*git.Commit{&c2, &c1})
 	s.UpdatePullRequests(ctx, nil, nil)
 	lines = strings.Split(output.String(), "\n")
 	fmt.Printf("OUT: %s\n", output.String())
@@ -300,6 +308,7 @@ func TestSPRAmendCommit(t *testing.T) {
 	githubmock.ExpectUpdatePullRequest(c1, nil)
 	githubmock.ExpectUpdatePullRequest(c2, &c1)
 	githubmock.ExpectGetInfo()
+	gitmock.ExpectLogAndRespond([]*git.Commit{&c2, &c1})
 	s.UpdatePullRequests(ctx, nil, nil)
 	lines = strings.Split(output.String(), "\n")
 	fmt.Printf("OUT: %s\n", output.String())
@@ -351,6 +360,7 @@ func TestSPRReorderCommit(t *testing.T) {
 
 	// 'git spr status' :: StatusPullRequest
 	githubmock.ExpectGetInfo()
+	gitmock.ExpectLogAndRespond([]*git.Commit{&c4, &c3, &c2, &c1})
 	s.StatusPullRequests(ctx)
 	assert.Equal("pull request stack is empty\n", output.String())
 	output.Reset()
@@ -369,6 +379,7 @@ func TestSPRReorderCommit(t *testing.T) {
 	githubmock.ExpectUpdatePullRequest(c3, &c2)
 	githubmock.ExpectUpdatePullRequest(c4, &c3)
 	githubmock.ExpectGetInfo()
+	gitmock.ExpectLogAndRespond([]*git.Commit{&c4, &c3, &c2, &c1})
 	s.UpdatePullRequests(ctx, nil, nil)
 	fmt.Printf("OUT: %s\n", output.String())
 	lines := strings.Split(output.String(), "\n")
@@ -397,6 +408,7 @@ func TestSPRReorderCommit(t *testing.T) {
 	githubmock.ExpectUpdatePullRequest(c1, &c4)
 	githubmock.ExpectUpdatePullRequest(c3, &c1)
 	githubmock.ExpectGetInfo()
+	gitmock.ExpectLogAndRespond([]*git.Commit{&c3, &c1, &c4, &c2})
 	s.UpdatePullRequests(ctx, nil, nil)
 	fmt.Printf("OUT: %s\n", output.String())
 	// TODO : Need to update pull requests in GetInfo expect to get this check to work
@@ -438,6 +450,7 @@ func TestSPRDeleteCommit(t *testing.T) {
 
 	// 'git spr status' :: StatusPullRequest
 	githubmock.ExpectGetInfo()
+	gitmock.ExpectLogAndRespond([]*git.Commit{&c4, &c3, &c2, &c1})
 	s.StatusPullRequests(ctx)
 	assert.Equal("pull request stack is empty\n", output.String())
 	output.Reset()
@@ -457,6 +470,7 @@ func TestSPRDeleteCommit(t *testing.T) {
 	githubmock.ExpectUpdatePullRequest(c4, &c3)
 	githubmock.ExpectGetInfo()
 
+	gitmock.ExpectLogAndRespond([]*git.Commit{&c4, &c3, &c2, &c1})
 	s.UpdatePullRequests(ctx, nil, nil)
 	fmt.Printf("OUT: %s\n", output.String())
 	lines := strings.Split(output.String(), "\n")
@@ -481,6 +495,7 @@ func TestSPRDeleteCommit(t *testing.T) {
 	githubmock.ExpectUpdatePullRequest(c4, &c1)
 	gitmock.ExpectPushCommits([]*git.Commit{&c1, &c4})
 	githubmock.ExpectGetInfo()
+	gitmock.ExpectLogAndRespond([]*git.Commit{&c4, &c1})
 	s.UpdatePullRequests(ctx, nil, nil)
 	fmt.Printf("OUT: %s\n", output.String())
 	// TODO : Need to update pull requests in GetInfo expect to get this check to work

@@ -264,7 +264,7 @@ func (sd *stackediff) UpdatePullRequests(ctx context.Context, reviewers []string
 //	their commits have already been merged.
 func (sd *stackediff) MergePullRequests(ctx context.Context, count *uint) {
 	sd.profiletimer.Step("MergePullRequests::Start")
-	githubInfo := sd.github.GetInfo(ctx, sd.gitcmd)
+	githubInfo := sd.github.GetInfo(ctx, sd.gitcmd, nil)
 	sd.profiletimer.Step("MergePullRequests::getGitHubInfo")
 
 	// MergeCheck
@@ -339,7 +339,9 @@ func (sd *stackediff) MergePullRequests(ctx context.Context, count *uint) {
 //	remotely on github.
 func (sd *stackediff) StatusPullRequests(ctx context.Context) {
 	sd.profiletimer.Step("StatusPullRequests::Start")
-	githubInfo := sd.github.GetInfo(ctx, sd.gitcmd)
+
+	localCommits := sd.getLocalCommitStack()
+	githubInfo := sd.github.GetInfo(ctx, sd.gitcmd, localCommits)
 
 	if len(githubInfo.PullRequests) == 0 {
 		fmt.Fprintf(sd.output, "pull request stack is empty\n")
@@ -360,7 +362,7 @@ func (sd *stackediff) SyncStack(ctx context.Context) {
 	sd.profiletimer.Step("SyncStack::Start")
 	defer sd.profiletimer.Step("SyncStack::End")
 
-	githubInfo := sd.github.GetInfo(ctx, sd.gitcmd)
+	githubInfo := sd.github.GetInfo(ctx, sd.gitcmd, nil)
 
 	if len(githubInfo.PullRequests) == 0 {
 		fmt.Fprintf(sd.output, "pull request stack is empty\n")
@@ -388,7 +390,7 @@ func (sd *stackediff) RunMergeCheck(ctx context.Context) {
 		return
 	}
 
-	githubInfo := sd.github.GetInfo(ctx, sd.gitcmd)
+	githubInfo := sd.github.GetInfo(ctx, sd.gitcmd, nil)
 
 	sigch := make(chan os.Signal, 1)
 	signal.Notify(sigch, os.Interrupt, syscall.SIGTERM)
@@ -577,7 +579,7 @@ func (sd *stackediff) fetchAndGetGitHubInfo(ctx context.Context) *github.GitHubI
 	if err != nil {
 		return nil
 	}
-	info := sd.github.GetInfo(ctx, sd.gitcmd)
+	info := sd.github.GetInfo(ctx, sd.gitcmd, nil)
 	if githubclient.BranchNameRegex.FindString(info.LocalBranch) != "" {
 		fmt.Printf("error: don't run spr in a remote pr branch\n")
 		fmt.Printf(" this could lead to weird duplicate pull requests getting created\n")
@@ -629,7 +631,7 @@ func (sd *stackediff) syncCommitStackToGitHub(ctx context.Context,
 
 	var refNames []string
 	for _, commit := range updatedCommits {
-		branchName := sd.branchNameFromCommit(info, commit)
+		branchName := sd.branchNameFromCommit(commit)
 		refNames = append(refNames,
 			commit.CommitHash+":refs/heads/"+branchName)
 	}
@@ -642,8 +644,8 @@ func (sd *stackediff) syncCommitStackToGitHub(ctx context.Context,
 	return true
 }
 
-func (sd *stackediff) branchNameFromCommit(info *github.GitHubInfo, commit git.Commit) string {
-	return "pr/" + info.LocalBranch + "/" + commit.CommitID
+func (sd *stackediff) branchNameFromCommit(commit git.Commit) string {
+	return "pr/" + commit.CommitID
 }
 
 func (sd *stackediff) mustgit(argStr string, output *string) {
