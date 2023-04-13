@@ -54,7 +54,17 @@ type PullRequestsViewerPullRequestsNodesCommitsNodesCommitStatusCheckRollup stru
 }
 
 type PullRequestsRepository struct {
-	Id string
+	Id                    string
+	BranchProtectionRules PullRequestsRepositoryBranchProtectionRules
+}
+
+type PullRequestsRepositoryBranchProtectionRules struct {
+	Nodes *PullRequestsRepositoryBranchProtectionRulesNodes
+}
+
+type PullRequestsRepositoryBranchProtectionRulesNodes []*struct {
+	Pattern                      string
+	RequiredApprovingReviewCount *int
 }
 
 // PullRequestsResponse response type for PullRequests
@@ -103,6 +113,12 @@ func (c *gqlclient) PullRequests(ctx context.Context,
 		}
 		repository(owner: $repo_owner, name: $repo_name) {
 			id
+			branchProtectionRules(first: 100) {
+				nodes {
+					pattern
+					requiredApprovingReviewCount
+				}
+			}
 		}
 	}`
 
@@ -161,7 +177,7 @@ type AssignableUsersResponse struct {
 	Repository *AssignableUsersRepository
 }
 
-// AssignableUsers from github/githubclient/queries.graphql:40
+// AssignableUsers from github/githubclient/queries.graphql:46
 func (c *gqlclient) AssignableUsers(ctx context.Context,
 	repoOwner string,
 	repoName string,
@@ -230,7 +246,7 @@ type CreatePullRequestResponse struct {
 	CreatePullRequest *CreatePullRequestCreatePullRequest
 }
 
-// CreatePullRequest from github/githubclient/queries.graphql:60
+// CreatePullRequest from github/githubclient/queries.graphql:66
 func (c *gqlclient) CreatePullRequest(ctx context.Context,
 	input CreatePullRequestInput,
 ) (*CreatePullRequestResponse, error) {
@@ -287,7 +303,7 @@ type UpdatePullRequestResponse struct {
 	UpdatePullRequest *UpdatePullRequestUpdatePullRequest
 }
 
-// UpdatePullRequest from github/githubclient/queries.graphql:73
+// UpdatePullRequest from github/githubclient/queries.graphql:79
 func (c *gqlclient) UpdatePullRequest(ctx context.Context,
 	input UpdatePullRequestInput,
 ) (*UpdatePullRequestResponse, error) {
@@ -343,7 +359,7 @@ type AddReviewersResponse struct {
 	RequestReviews *AddReviewersRequestReviews
 }
 
-// AddReviewers from github/githubclient/queries.graphql:85
+// AddReviewers from github/githubclient/queries.graphql:91
 func (c *gqlclient) AddReviewers(ctx context.Context,
 	input RequestReviewsInput,
 ) (*AddReviewersResponse, error) {
@@ -395,7 +411,7 @@ type CommentPullRequestResponse struct {
 	AddComment *CommentPullRequestAddComment
 }
 
-// CommentPullRequest from github/githubclient/queries.graphql:97
+// CommentPullRequest from github/githubclient/queries.graphql:103
 func (c *gqlclient) CommentPullRequest(ctx context.Context,
 	input AddCommentInput,
 ) (*CommentPullRequestResponse, error) {
@@ -449,7 +465,7 @@ type MergePullRequestResponse struct {
 	MergePullRequest *MergePullRequestMergePullRequest
 }
 
-// MergePullRequest from github/githubclient/queries.graphql:107
+// MergePullRequest from github/githubclient/queries.graphql:113
 func (c *gqlclient) MergePullRequest(ctx context.Context,
 	input MergePullRequestInput,
 ) (*MergePullRequestResponse, error) {
@@ -505,7 +521,7 @@ type ClosePullRequestResponse struct {
 	ClosePullRequest *ClosePullRequestClosePullRequest
 }
 
-// ClosePullRequest from github/githubclient/queries.graphql:119
+// ClosePullRequest from github/githubclient/queries.graphql:125
 func (c *gqlclient) ClosePullRequest(ctx context.Context,
 	input ClosePullRequestInput,
 ) (*ClosePullRequestResponse, error) {
@@ -571,7 +587,7 @@ type StarCheckResponse struct {
 	Viewer StarCheckViewer
 }
 
-// StarCheck from github/githubclient/queries.graphql:131
+// StarCheck from github/githubclient/queries.graphql:137
 func (c *gqlclient) StarCheck(ctx context.Context,
 	after *string,
 ) (*StarCheckResponse, error) {
@@ -629,7 +645,7 @@ type StarGetRepoResponse struct {
 	Repository *StarGetRepoRepository
 }
 
-// StarGetRepo from github/githubclient/queries.graphql:147
+// StarGetRepo from github/githubclient/queries.graphql:153
 func (c *gqlclient) StarGetRepo(ctx context.Context,
 	owner string,
 	name string,
@@ -681,7 +697,7 @@ type StarAddResponse struct {
 	AddStar *StarAddAddStar
 }
 
-// StarAdd from github/githubclient/queries.graphql:156
+// StarAdd from github/githubclient/queries.graphql:162
 func (c *gqlclient) StarAdd(ctx context.Context,
 	input AddStarInput,
 ) (*StarAddResponse, error) {
