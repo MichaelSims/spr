@@ -3,6 +3,7 @@ module github.com/ejoffe/spr
 go 1.16
 
 require (
+	github.com/danwakefield/fnmatch v0.0.0-20160403171240-cbb64ac3d964
 	github.com/ejoffe/profiletimer v0.1.0
 	github.com/ejoffe/rake v0.2.7
 	github.com/google/uuid v1.2.0

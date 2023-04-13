@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"context"
 	"fmt"
+	"github.com/danwakefield/fnmatch"
 	"net/url"
 	"os"
 	"path"
@@ -221,9 +222,30 @@ func (c *client) GetInfo(ctx context.Context, gitcmd git.GitInterface) *github.G
 				}
 			}
 
+			var numApprovals = 0
+			var blockedByReviewState = false
+			for _, review := range *node.Reviews.Nodes {
+				switch review.State {
+				case genclient.PullRequestReviewState_APPROVED:
+					numApprovals++
+				case genclient.PullRequestReviewState_CHANGES_REQUESTED:
+					fallthrough
+				case genclient.PullRequestReviewState_PENDING:
+					blockedByReviewState = true
+				}
+			}
+
+			var requiredApprovals = 1
+			for _, rule := range *resp.Repository.BranchProtectionRules.Nodes {
+				if fnmatch.Match(rule.Pattern, c.config.Repo.GitHubBranch, 0) {
+					requiredApprovals = *rule.RequiredApprovingReviewCount
+					break
+				}
+			}
+
 			pullRequest.MergeStatus = github.PullRequestMergeStatus{
 				ChecksPass:     checkStatus,
-				ReviewApproved: node.ReviewDecision != nil && *node.ReviewDecision == "APPROVED",
+				ReviewApproved: !blockedByReviewState && numApprovals >= requiredApprovals,
 				NoConflicts:    node.Mergeable == "MERGEABLE",
 			}
 
