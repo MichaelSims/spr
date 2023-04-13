@@ -222,30 +222,17 @@ func (c *client) GetInfo(ctx context.Context, gitcmd git.GitInterface) *github.G
 				}
 			}
 
-			var numApprovals = 0
-			var blockedByReviewState = false
-			for _, review := range *node.Reviews.Nodes {
-				switch review.State {
-				case genclient.PullRequestReviewState_APPROVED:
-					numApprovals++
-				case genclient.PullRequestReviewState_CHANGES_REQUESTED:
-					fallthrough
-				case genclient.PullRequestReviewState_PENDING:
-					blockedByReviewState = true
+			reviewApproved := func() bool {
+				if c.IsBlockedByReviewState(node.Reviews.Nodes) {
+					return false
 				}
-			}
-
-			var requiredApprovals = 1
-			for _, rule := range *resp.Repository.BranchProtectionRules.Nodes {
-				if fnmatch.Match(rule.Pattern, c.config.Repo.GitHubBranch, 0) {
-					requiredApprovals = *rule.RequiredApprovingReviewCount
-					break
-				}
+				requiredApprovals := c.GetRequiredApprovalCount(resp.Repository.BranchProtectionRules.Nodes)
+				return c.GetNumApprovals(node.Reviews.Nodes) >= requiredApprovals
 			}
 
 			pullRequest.MergeStatus = github.PullRequestMergeStatus{
 				ChecksPass:     checkStatus,
-				ReviewApproved: !blockedByReviewState && numApprovals >= requiredApprovals,
+				ReviewApproved: reviewApproved(),
 				NoConflicts:    node.Mergeable == "MERGEABLE",
 			}
 
@@ -266,6 +253,34 @@ func (c *client) GetInfo(ctx context.Context, gitcmd git.GitInterface) *github.G
 	log.Debug().Interface("Info", info).Msg("GetInfo")
 
 	return info
+}
+
+func (c *client) GetRequiredApprovalCount(rules *genclient.PullRequestsRepositoryBranchProtectionRulesNodes) int {
+	for _, rule := range *rules {
+		if fnmatch.Match(rule.Pattern, c.config.Repo.GitHubBranch, 0) {
+			return *rule.RequiredApprovingReviewCount
+		}
+	}
+	return 1
+}
+
+func (c *client) GetNumApprovals(reviews *genclient.PullRequestsViewerPullRequestsNodesReviewsNodes) int {
+	numApprovals := 0
+	for _, review := range *reviews {
+		if review.State == genclient.PullRequestReviewState_APPROVED {
+			numApprovals++
+		}
+	}
+	return numApprovals
+}
+func (c *client) IsBlockedByReviewState(reviews *genclient.PullRequestsViewerPullRequestsNodesReviewsNodes) bool {
+	for _, review := range *reviews {
+		if review.State == genclient.PullRequestReviewState_CHANGES_REQUESTED ||
+			review.State == genclient.PullRequestReviewState_PENDING {
+			return true
+		}
+	}
+	return false
 }
 
 // GetAssignableUsers is taken from github.com/cli/cli/api and is the approach used by the official gh
